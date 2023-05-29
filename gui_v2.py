@@ -1,5 +1,7 @@
 import multiprocessing as mp
 import time
+import matplotlib
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from PyQt5 import QtCore, QtGui, QtWidgets
 import psutil as cp
@@ -40,11 +42,13 @@ def multicore(num_interacoes,nthreads):
         resul += tp.get()
     tmp2 = time.time()
     return (tmp2 - tmp1)
-
 class Ui_MainWindow(object):
+    ts = []
+    tm = []
+    ctrl = 0
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(620, 368)
+        MainWindow.resize(620, 398)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
@@ -103,9 +107,6 @@ class Ui_MainWindow(object):
         self.label_5.setObjectName("label_5")
         self.gridLayout.addWidget(self.label_5, 2, 0, 1, 1)
         self.horizontalLayout.addLayout(self.gridLayout)
-        self.iniciar_bt = QtWidgets.QPushButton(self.centralwidget)
-        self.iniciar_bt.setGeometry(QtCore.QRect(480, 250, 121, 31))
-        self.iniciar_bt.setObjectName("iniciar_bt")
         self.frame = QtWidgets.QFrame(self.centralwidget)
         self.frame.setGeometry(QtCore.QRect(10, 210, 461, 111))
         self.frame.setStyleSheet("border-color: rgb(0, 0, 0);\n"
@@ -148,6 +149,22 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addWidget(self.ram_size)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.verticalLayout.addLayout(self.verticalLayout_2)
+        self.gridLayoutWidget = QtWidgets.QWidget(self.centralwidget)
+        self.gridLayoutWidget.setGeometry(QtCore.QRect(480, 210, 131, 111))
+        self.gridLayoutWidget.setObjectName("gridLayoutWidget")
+        self.gridLayout_3 = QtWidgets.QGridLayout(self.gridLayoutWidget)
+        self.gridLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_3.setObjectName("gridLayout_3")
+        self.iniciar_bt = QtWidgets.QPushButton(self.gridLayoutWidget)
+        self.iniciar_bt.setObjectName("iniciar_bt")
+        self.gridLayout_3.addWidget(self.iniciar_bt, 0, 0, 1, 1)
+        self.iniciar_bt_2 = QtWidgets.QPushButton(self.gridLayoutWidget)
+        self.iniciar_bt_2.setObjectName("iniciar_bt_2")
+        self.gridLayout_3.addWidget(self.iniciar_bt_2, 1, 0, 1, 1)
+        self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
+        self.progressBar.setGeometry(QtCore.QRect(17, 330, 591, 23))
+        self.progressBar.setProperty("value", 0)
+        self.progressBar.setObjectName("progressBar")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 620, 22))
@@ -169,10 +186,11 @@ class Ui_MainWindow(object):
         self.label_4.setText(_translate("MainWindow", "Média Multi-Core"))
         self.label.setText(_translate("MainWindow", "Média Single-Core"))
         self.label_5.setText(_translate("MainWindow", "Eficiencia"))
-        self.iniciar_bt.setText(_translate("MainWindow", "Iniciar"))
         self.label_10.setText(_translate("MainWindow", "Processador:"))
         self.label_3.setText(_translate("MainWindow", " Numero de Nucleos: "))
         self.label_11.setText(_translate("MainWindow", "Ram"))
+        self.iniciar_bt.setText(_translate("MainWindow", "Iniciar"))
+        self.iniciar_bt_2.setText(_translate("MainWindow", "Gerar Gráficos"))
     def pc_info(self):
         cpu = ci.get_cpu_info()
         ram = cp.virtual_memory()
@@ -184,11 +202,17 @@ class Ui_MainWindow(object):
         
         media_mc = 0
         media_sc = 0
+
         for i in range(int(self.rep_num.text())):
-            media_mc += multicore(int(self.it_num.text()),int(self.threadnum.text()))
-            media_sc += pi_calc(int(self.it_num.text()))
-        media_mc = media_mc/int(self.rep_num.text())
-        media_sc = media_sc/int(self.rep_num.text())
+            self.ts.append(pi_calc(int(self.it_num.text())))
+            self.tm.append(multicore(int(self.it_num.text()),int(self.threadnum.text())))
+            self.progressBar.setValue(int((i+1)/int(self.rep_num.text())*100))
+            if self.progressBar.value() == 100:
+                self.iniciar_bt_2.setEnabled(True)
+            else:
+                self.iniciar_bt_2.setEnabled(False)
+        media_mc = sum(self.tm)/int(self.rep_num.text())
+        media_sc = sum(self.ts)/int(self.rep_num.text())
         frmt_mc = "{:.2f} s".format(media_mc)
         frmt_sc = "{:.2f} s".format(media_sc)
         self.sc_media.setText(frmt_sc)
@@ -200,10 +224,26 @@ class Ui_MainWindow(object):
         self.effc.setEnabled(False)
         self.mc_media.setStyleSheet("color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);")
         self.sc_media.setStyleSheet("color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);")
-        self.effc.setStyleSheet("   color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);")    
-    def acionar(self):
-        self.iniciar_bt.clicked.connect(self.set_fields)
+        self.effc.setStyleSheet("   color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);")
+        self.iniciar_bt_2.setEnabled(False)
+    def gerar_graficos(self):
+        x = range(1, int(self.rep_num.text())+1)
+        plt.plot(x, self.ts, label = "Single-Core")
+        plt.plot(x,self.tm, label = "Multi-Core")
+        plt.legend()
+        plt.xlabel("Repetições")
+        plt.ylabel("Tempo (s)")
+        plt.show(),
+        self.ts.clear()
+        self.tm.clear()
 
+    def acionar(self):
+        self.ts.clear()
+        self.tm.clear()
+        self.progressBar.setValue(0)
+        self.iniciar_bt.clicked.connect(self.set_fields)
+        self.iniciar_bt_2.clicked.connect(self.gerar_graficos)
+        
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
