@@ -1,2 +1,2 @@
-Num_interacoes,Num_repeticoes,Tempo_sequencial,Tempo_multicore,Aceleracao,Eficiencia
-10000000,30,2.7184253772099813,0.5857218106587728,4.641154431576511,0.5801443039470638
+Num_interacoes,Num_repeticoes,Tempo_sequencial,Tempo_multicore,Aceleracao,Eficiencia,Pi Real,Pi Calculado,Pi Calculado
+10000000,30,2.6441405614217124,0.5941258827845256,4.450471925291757,0.5563089906614697,3.141592653589793,3.1415925535897204

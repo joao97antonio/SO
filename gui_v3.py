@@ -11,15 +11,6 @@ import numpy
 from time import sleep
 
 global_pi = 0
-class Worker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-
-    def run(self):
-        for i in range(5):
-            sleep(1)
-            self.progress.emit(i + 1)
-        self.finished.emit()
 def pi_calc_MC (q, min, max):
     pi = 0
     for i in range(min, max):
@@ -249,23 +240,6 @@ class Ui_MainWindow(object):
         self.label_5.setText(_translate("MainWindow", "Eficiencia"))
         self.iniciar_bt.setText(_translate("MainWindow", "Iniciar"))
         self.iniciar_bt_2.setText(_translate("MainWindow", "Gerar Gráficos"))
-    def runLongTask(self):
-        self.thread = QThread()
-        self.worker = Worker()
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.progress.connect(self.reportProgress)
-        self.thread.start()
-        self.longRunningBtn.setEnabled(False)
-        self.thread.finished.connect(
-            lambda: self.longRunningBtn.setEnabled(True)
-        )
-        self.thread.finished.connect(
-            lambda: self.stepLabel.setText("Long-Running Step: 0")
-        )
     def pc_info(self):
         cpu = ci.get_cpu_info()
         ram = cp.virtual_memory()
